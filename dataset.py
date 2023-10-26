@@ -6,7 +6,7 @@ import numpy as np
 
 # %%
 from torch.utils.data import DataLoader
-def load_traffic(root, batch_size):
+def load_traffic(root, batch_size, n_workers, mode):
     """
     Load traffic dataset
     return train_loader, val_loader, test_loader
@@ -28,9 +28,16 @@ def load_traffic(root, batch_size):
     val_df = df.iloc[int(0.75*len(df)):int(0.875*len(df))]
     test_df = df.iloc[int(0.75*len(df)):]
 
-    train_loader = DataLoader(Traffic(train_df), batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(Traffic(val_df), batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(Traffic(test_df), batch_size=batch_size, shuffle=False)
+    if(mode=="debug"):
+        print("DEBUG MODE: LOADING DATASET WITH 10% DATA ")
+        train_df = train_df.sample(n=int(0.1*len(train_df)))
+        val_df = val_df.sample(n=int(0.1*len(train_df)))
+        test_df = test_df.sample(n=int(0.1*len(train_df)))
+
+
+    train_loader = DataLoader(Traffic(train_df), batch_size=batch_size, shuffle=True, num_workers=n_workers, persistent_workers=(n_workers!=0))
+    val_loader = DataLoader(Traffic(val_df), batch_size=batch_size, shuffle=False, num_workers=n_workers, persistent_workers=(n_workers!=0))
+    test_loader = DataLoader(Traffic(test_df), batch_size=batch_size, shuffle=False, num_workers=n_workers, persistent_workers=(n_workers!=0))
 
     return train_loader, val_loader, test_loader, n_sensor  
 
