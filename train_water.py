@@ -239,3 +239,4 @@ for _ in range(30):
     if epoch % args.log_interval==0:
         torch.save(A.data,os.path.join(save_path, "graph_{}.pt".format(epoch)))
         torch.save(model.state_dict(), os.path.join(save_path, "{}_{}.pt".format(args.name, epoch)))
+# %%

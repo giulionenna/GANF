@@ -53,8 +53,13 @@ model = GANF(args.n_blocks, 1, args.hidden_size, args.n_hidden, dropout=0.0, bat
 model = model.to(device)
 
 
-model.load_state_dict(torch.load("./checkpoint/eval/water/GANF_water_seed_18_best.pt"))
-A = torch.load("./checkpoint/eval/water/graph_best.pt").to(device)
+#model.load_state_dict(torch.load("./checkpoint/eval/water/GANF_water_seed_18_best.pt"))
+#A = torch.load("./checkpoint/eval/water/graph_best.pt").to(device)
+
+model.load_state_dict(torch.load("./checkpoint/model/GANF_Water/GANF_Water_best.pt"))
+A = torch.load("./checkpoint/model/GANF_Water/graph_best.pt").to(device)
+
+
 model.eval()
 #%%
 loss_test = []
