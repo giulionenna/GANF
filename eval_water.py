@@ -54,7 +54,7 @@ model = model.to(device)
 
 
 model.load_state_dict(torch.load("./checkpoint/eval/water/GANF_water_seed_18_best.pt"))
-A = torch.load("./checkpoint/eval/GANF_water_seed_18/graph_best.pt").to(device)
+A = torch.load("./checkpoint/eval/water/graph_best.pt").to(device)
 model.eval()
 #%%
 loss_test = []
