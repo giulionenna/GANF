@@ -74,14 +74,14 @@ class Traffic(Dataset):
 
         return torch.FloatTensor(data).transpose(0,1)
 
-def load_water(root, batch_size,label=False):
+def load_water(root, batch_size, lookback, label=False):
     
     data = pd.read_csv(root)
     data = data.rename(columns={"Normal/Attack":"label"})
     data.label[data.label!="Normal"]=1
     data.label[data.label=="Normal"]=0
-    data[" Timestamp"] = pd.to_datetime(data[" Timestamp"])
-    data = data.set_index(" Timestamp")
+    data["Timestamp"] = pd.to_datetime(data["Timestamp"])
+    data = data.set_index("Timestamp")
 
     #%%
     feature = data.iloc[:,:51]
@@ -95,17 +95,17 @@ def load_water(root, batch_size,label=False):
     train_df = norm_feature.iloc[:int(0.6*len(data))]
     train_label = data.label.iloc[:int(0.6*len(data))]
 
-    val_df = norm_feature.iloc[int(0.6*len(data)):int(0.8*len(data))]
-    val_label = data.label.iloc[int(0.6*len(data)):int(0.8*len(data))]
+    val_df = norm_feature.iloc[int(0.6*len(data)):int(0.7*len(data))]
+    val_label = data.label.iloc[int(0.6*len(data)):int(0.7*len(data))]
     
-    test_df = norm_feature.iloc[int(0.8*len(data)):]
-    test_label = data.label.iloc[int(0.8*len(data)):]
+    test_df = norm_feature.iloc[int(0.7*len(data)):]
+    test_label = data.label.iloc[int(0.7*len(data)):]
     if label:
-        train_loader = DataLoader(WaterLabel(train_df,train_label), batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(WaterLabel(train_df,train_label, lookback), batch_size=batch_size, shuffle=True)
     else:
-        train_loader = DataLoader(Water(train_df,train_label), batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(Water(val_df,val_label), batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(Water(test_df,test_label), batch_size=batch_size, shuffle=False)
+        train_loader = DataLoader(Water(train_df,train_label, lookback), batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(Water(val_df,val_label, lookback), batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(Water(test_df,test_label, lookback), batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, test_loader, n_sensor
 

@@ -20,6 +20,7 @@ parser.add_argument('--graph', type=str, default='None')
 parser.add_argument('--model', type=str, default='None')
 parser.add_argument('--seed', type=int, default=18, help='Random seed to use.')
 # made parameters
+parser.add_argument('--lookback', type=int, default = 50, help='size of the lookback window')
 parser.add_argument('--n_blocks', type=int, default=1, help='Number of blocks to stack in a model (MADE in MAF; Coupling+BN in RealNVP).')
 parser.add_argument('--n_components', type=int, default=1, help='Number of Gaussian clusters for mixture of gaussians models.')
 parser.add_argument('--hidden_size', type=int, default=32, help='Hidden layer size for MADE (and each MADE block in an MAF).')
@@ -56,8 +57,7 @@ if args.cuda:
 print("Loading dataset")
 from dataset import load_water
 
-train_loader, val_loader, test_loader, n_sensor = load_water(args.data_dir, \
-                                                                args.batch_size)
+train_loader, val_loader, test_loader, n_sensor = load_water(args.data_dir, args.batch_size, args.lookback)
 #%%
 
 rho = args.rho_init
@@ -83,7 +83,7 @@ else:
 A = torch.tensor(init, requires_grad=True, device=device)
 
 #%%
-model = GANF(args.n_blocks, 1, args.hidden_size, args.n_hidden, dropout=0.0, batch_norm=args.batch_norm)
+model = GANF( n_sensor, args.n_blocks, 1, args.hidden_size, args.n_hidden, dropout=0.0, batch_norm=args.batch_norm)
 model = model.to(device)
 
 if args.model != 'None':
