@@ -97,8 +97,15 @@ class TemporalConvNet(nn.Module):
 
 class GANF(nn.Module):
 
-    def __init__ (self,n_features,  n_blocks, input_size, hidden_size, n_hidden ,dropout = 0.1, model="MAF", batch_norm=True, use_tcn = False, use_gru = True):
+    def __init__ (self,n_features,  n_blocks, input_size, hidden_size, n_hidden ,dropout = 0.1, model="MAF", batch_norm=True, use_tcn = True, use_gru = True, dim_red = True):
         super(GANF, self).__init__()
+        if dim_red:
+            reduction = nn.Sequential(
+                nn.Linear(n_features, 50),
+                nn.LeakyReLU()
+            )
+            n_features = 50
+        
         if use_gru:
            self.rnn = nn.GRU(input_size=input_size, hidden_size=hidden_size,batch_first=True, dropout=dropout)
         else: 
