@@ -176,3 +176,96 @@ class WaterLabel(Dataset):
         data = self.data[start:end].reshape([self.window_size,-1, 1])
 
         return torch.FloatTensor(data).transpose(0,1),self.label[index]
+    
+def load_act(root, batch_size, lookback, cut=1, resample_rate=1, label=False, train_test_split=0.7, scaler='Standard', spectral_residual=False ):
+    from os import listdir, makedirs, path
+    X_1 = pd.read_csv(path.join(root, 'Train\\X_train.txt'), delimiter=' ', header=None)
+    X_2 = pd.read_csv(path.join(root, 'Test/X_test.txt'), delimiter=' ', header=None)
+
+    values = pd.concat([X_1, X_2], axis=0, ignore_index=True)
+
+    y_1 = pd.read_csv(path.join(root, 'Train/y_train.txt'), delimiter=' ', header=None)
+    y_2 = pd.read_csv(path.join(root, 'Test/y_test.txt'), delimiter=' ', header=None)
+    y = pd.concat([y_1, y_2], axis=0, ignore_index=True)
+    labels = np.array([x in range(7,13) for x in y.values])
+
+    if cut < 1:
+        print('Cutting the dataset at ' + str(cut) + ' length \n')
+        values = values.iloc[:int(len(values)*cut)]
+        labels = labels[:int(len(labels)*cut)]
+    sample_rate = resample_rate
+    if sample_rate<=0 or sample_rate>1:
+        print('Incorrect resample rate, defaulting to 1\n')
+        sample_rate = 1
+    else:
+        print('resampling to one observation every '+ str(int(1/sample_rate)))
+
+    values = values.iloc[::int(1/sample_rate)]#resampling
+    labels = pd.Series(labels[::int(1/sample_rate)])#resampling
+
+    train_test_split=train_test_split
+
+    if scaler == 'quantile':
+        from sklearn.preprocessing  import QuantileTransformer
+        scaler = QuantileTransformer(output_distribution='uniform')
+    if scaler =='standard':
+        from sklearn.preprocessing  import StandardScaler
+        scaler = StandardScaler()
+    else:
+        from sklearn.preprocessing  import MinMaxScaler
+        scaler = MinMaxScaler()
+
+    values = pd.DataFrame(scaler.fit_transform(values)) 
+    
+    train_values = values.iloc[:int((train_test_split-0.1)*len(labels)),:]
+    val_values = values.iloc[int((train_test_split-0.1)*len(labels)):int((train_test_split)*len(labels)),:].reset_index(drop=True)
+    
+    train_labels = labels[:int((train_test_split-0.1)*len(labels))]
+    val_labels = labels[int((train_test_split-0.1)*len(labels)):int((train_test_split)*len(labels))].reset_index(drop=True)
+
+    print('removing anomalies from training data')
+    train_values = train_values[train_labels==False].reset_index(drop=True)
+    train_labels = train_labels[train_labels==False].reset_index(drop=True)
+
+    test_values = values.iloc[int(train_test_split*len(labels)):,:].reset_index(drop=True)
+    test_labels = labels[int(train_test_split*len(labels)):].reset_index(drop=True)
+
+    train_loader = DataLoader(Act(train_values,train_labels, lookback), batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(Act(val_values,val_labels, lookback), batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(Act(test_values,test_labels, lookback), batch_size=batch_size, shuffle=False)
+
+    n_sensor = values.shape[1]
+    return train_loader, val_loader, test_loader, n_sensor
+
+class Act(Dataset):
+    def __init__(self, df, label, window_size=60, stride_size=10):
+        super(Act, self).__init__()
+        self.df = df
+        self.window_size = window_size
+        self.stride_size = stride_size
+
+        self.data, self.idx, self.label = self.preprocess(df,label)
+    
+    def preprocess(self, df, label):
+
+        start_idx = np.arange(0,len(df)-self.window_size,self.stride_size)
+        end_idx = np.arange(self.window_size, len(df), self.stride_size)
+
+        delat_time =  df.index[end_idx]-df.index[start_idx]
+        idx_mask = delat_time==pd.Timedelta(self.window_size,unit='s')
+
+        return df.values, start_idx, label[start_idx]
+
+    def __len__(self):
+
+        length = len(self.idx)
+
+        return length
+
+    def __getitem__(self, index):
+        #  N X K X L X D 
+        start = self.idx[index]
+        end = start + self.window_size
+        data = self.data[start:end].reshape([self.window_size,-1, 1])
+
+        return torch.FloatTensor(data).transpose(0,1)
