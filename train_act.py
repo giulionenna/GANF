@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score
 parser = argparse.ArgumentParser()
 # files
 parser.add_argument('--data_dir', type=str, 
-                    default='.\\data\\ACT', help='Location of datasets.')
+                    default='./data/ACT', help='Location of datasets.')
 parser.add_argument('--output_dir', type=str, 
                     default='./checkpoint/model')
 parser.add_argument('--name',default='GANF_act')

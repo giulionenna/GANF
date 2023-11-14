@@ -179,7 +179,7 @@ class WaterLabel(Dataset):
     
 def load_act(root, batch_size, lookback, cut=1, resample_rate=1, label=False, train_test_split=0.7, scaler='Standard', spectral_residual=False ):
     from os import listdir, makedirs, path
-    X_1 = pd.read_csv(path.join(root, 'Train\\X_train.txt'), delimiter=' ', header=None)
+    X_1 = pd.read_csv(path.join(root, 'Train/X_train.txt'), delimiter=' ', header=None)
     X_2 = pd.read_csv(path.join(root, 'Test/X_test.txt'), delimiter=' ', header=None)
 
     values = pd.concat([X_1, X_2], axis=0, ignore_index=True)
